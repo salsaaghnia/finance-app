@@ -30,9 +30,9 @@
     - name: Install git, podman and python3 with exact versions
       ansible.builtin.dnf:
         name: 
-          - git
-          - podman
-          - python3
+          - git-2.55.0
+          - podman-5.8.1
+          - python3-3.14.3
         state: present
       become: true
 
