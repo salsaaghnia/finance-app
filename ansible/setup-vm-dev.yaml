@@ -16,10 +16,23 @@
 
   tasks:
 
-    # --- Install ---
-    - name: Install git, podman and python3
+    
+    - name: Pre-validation check for required inputs
+      ansible.builtin.assert:
+        that:
+          - podman_registry_username | length > 0
+          - podman_registry_password | length > 0
+          - oc_token | length > 0
+        fail_msg: "Validasi Gagal: Username, Password Podman, atau Token OpenShift masih kosong!"
+        success_msg: "Validasi Sukses: Kredensial telah terisi."
+
+    
+    - name: Install git, podman and python3 with exact versions
       ansible.builtin.dnf:
-        name: [git, podman, python3]
+        name: 
+          - git-2.43.0
+          - podman-4.9.4
+          - python3-3.12.1
         state: present
       become: true
 
@@ -37,7 +50,7 @@
         mode: "0755"
       become: true
 
-    # --- Validate ---
+    
     - name: Check versions of all tools
       ansible.builtin.command: "{{ item }}"
       loop:
@@ -52,23 +65,25 @@
       ansible.builtin.debug:
         msg: "{{ tool_versions.results | map(attribute='stdout') | list }}"
 
-    # --- git clone ---
+    
     - name: Clone the git repository
       ansible.builtin.git:
         repo: "{{ git_repo_url }}"
         dest: "{{ git_dest }}"
 
-    # --- podman login ---
+    
     - name: Log in to the container registry with podman
       ansible.builtin.command: "podman login {{ podman_registry_url }} -u {{ podman_registry_username }} -p {{ podman_registry_password }}"
       when: podman_registry_username | length > 0 and podman_registry_password | length > 0
-      #no_log: true
+      
+      no_log: true 
 
-    # --- oc login ---
+    
     - name: Log in to the OpenShift cluster with oc
       ansible.builtin.command: "oc login {{ oc_api_url }} --token={{ oc_token }}"
       when: oc_token | length > 0
-      #no_log: true
+      
+      no_log: true 
 
     - name: Confirm oc login
       ansible.builtin.command: oc whoami
