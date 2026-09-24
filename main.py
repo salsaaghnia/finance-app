@@ -5,11 +5,12 @@ from datetime import datetime, date
 from beanie import Document, init_beanie, PydanticObjectId
 from pymongo import AsyncMongoClient
 from typing import Literal, Optional
+import httpx
 import pandas as pd
 import io
 
 
-app = FastAPI()
+app = FastAPI(title="Transaction")
 
 class Transaction(Document):
 
@@ -21,7 +22,7 @@ class Transaction(Document):
 
     class Settings:
 
-        name = "trx_collection"
+        name = "trx_profiling"
 
 
 
@@ -52,9 +53,10 @@ async def init_db():
 
 
 @app.post("/transaction/add")
-
 async def add_transaction(request_body: RequestNewTransaction):
     final_date = request_body.date if request_body.date is not None else datetime.now()
+    
+    # 1. Simpan transaksi ke database
     trx = Transaction(
         date=final_date, 
         amount=request_body.amount, 
@@ -63,7 +65,34 @@ async def add_transaction(request_body: RequestNewTransaction):
         trx_type=request_body.trx_type
     )
     await trx.insert()
-    return trx
+    
+    alert_message = None
+    
+    # 2. Trigger Profiling API (Hanya jika transaksi berupa pengeluaran)
+    if trx.trx_type == "purchase":
+        async with httpx.AsyncClient() as client:
+            try:
+                # Pastikan port 8001 sesuai dengan port tempat profilling.py berjalan
+                profiling_url = "http://localhost:8001/check-limit"
+                
+                # Kirim request POST ke service profiling
+                response = await client.post(
+                    profiling_url, 
+                    json={"current_amount": trx.amount}
+                )
+                
+                # Tangkap pesan motivasinya jika berhasil
+                if response.status_code == 200:
+                    alert_message = response.json().get("alert_message")
+            except Exception as e:
+                alert_message = "Peringatan: Layanan profiling belum menyala atau tidak dapat dijangkau."
+    
+    # 3. Kembalikan respons gabungan
+    return {
+        "status": "success",
+        "transaction": trx,
+        "profiling_alert": alert_message
+    }
 
 
 
