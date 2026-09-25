@@ -61,7 +61,7 @@ async def check_limit(req: ProfilingRequest):
     x = total_previous / len(previous_months)
     
     if x >= y:
-        message = "Aman! Pengeluaranmu bulan ini (Rp {y:,.0f}) masih di bawah rata-rata (Rp {x:,.0f}). Good job, pertahankan kebiasaan baik ini ya!"
+        message = f"Aman! Pengeluaranmu bulan ini (Rp {y:,.0f}) masih di bawah rata-rata (Rp {x:,.0f}). Good job, pertahankan kebiasaan baik ini ya!"
     else:
         message = (
             f"Warning! Pengeluaranmu bulan ini (Rp {y:,.0f}) sudah melebihi "

@@ -73,7 +73,7 @@ async def add_transaction(request_body: RequestNewTransaction):
         async with httpx.AsyncClient() as client:
             try:
                 # Pastikan port 8001 sesuai dengan port tempat profilling.py berjalan
-                profiling_url = "http://localhost:8001/check-limit"
+                profiling_url = os.getenv("PROFILING_SERVICE_URL", "http://localhost:8001/check-limit")
                 
                 # Kirim request POST ke service profiling
                 response = await client.post(
