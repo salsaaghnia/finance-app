@@ -1,23 +1,41 @@
 ---
-- name: Instalasi dan Setup MongoDB
-  hosts: all
-  tasks:
-    - name: Pastikan Podman terinstal
+- name: Add MongoDB official repository
+      ansible.builtin.yum_repository:
+        name: mongodb-org-8.0
+        description: MongoDB Repository
+        baseurl: https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
+        gpgcheck: true
+        enabled: true
+        gpgkey: https://www.mongodb.org/static/pgp/server-8.0.asc
+      become: true
+
+    - name: Install system packages, developer tools, and MongoDB
       ansible.builtin.dnf:
-        name: podman
+        name:
+          - "git-{{ git_version }}*"
+          - "podman-{{ podman_version }}*"
+          - "python3-{{ python_version }}*"
+          - mongodb-org
         state: present
       become: true
 
-    - name: Cek apakah container MongoDB sudah berjalan
-      ansible.builtin.command: podman ps -q -f name=mongo-db
-      register: mongo_status
-      changed_when: false
+    - name: Enable and start MongoDB service
+      ansible.builtin.systemd:
+        name: mongod
+        enabled: true
+        state: started
+      become: true
 
-    - name: Hapus sisa container lama jika ada error (Opsional/Pembersihan)
-      ansible.builtin.command: podman rm -f mongo-db
-      when: mongo_status.stdout == ""
-      ignore_errors: true
+    - name: Download pinned oc CLI archive
+      ansible.builtin.get_url:
+        url: "{{ oc_cli_download_url }}"
+        dest: "/tmp/openshift-client-linux-{{ oc_version }}.tar.gz"
+        mode: "0644"
 
-    - name: Jalankan MongoDB menggunakan Podman
-      ansible.builtin.command: podman run -d --name mongo-db -p 27017:27017 docker.io/library/mongo:latest
-      when: mongo_status.stdout == ""
+    - name: Extract oc binary to /usr/local/bin
+      ansible.builtin.unarchive:
+        src: "/tmp/openshift-client-linux-{{ oc_version }}.tar.gz"
+        dest: "/usr/local/bin"
+        remote_src: true
+        mode: "0755"
+      become: true
