@@ -5,9 +5,6 @@
     - name: Tambahkan repository MongoDB terbaru (8.0)
       ansible.builtin.copy:
         dest: /etc/yum.repos.d/mongodb-org-8.0.repo
-- name: Tambahkan repository MongoDB terbaru (8.0)
-      ansible.builtin.copy:
-        dest: /etc/yum.repos.d/mongodb-org-8.0.repo
         content: |
           [mongodb-org-8.0]
           name=MongoDB Repository
