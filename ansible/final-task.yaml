@@ -15,9 +15,6 @@
   - name: Install system packages, developer tools, and MongoDB
     ansible.builtin.dnf:
       name:
-        - "git-{{ git_version }}*"
-        - "podman-{{ podman_version }}*"
-        - "python3-{{ python_version }}*"
         - mongodb-org
       state: present
     become: true
@@ -27,18 +24,4 @@
       name: mongod
       enabled: true
       state: started
-    become: true
-  
-  - name: Download pinned oc CLI archive
-    ansible.builtin.get_url:
-      url: "{{ oc_cli_download_url }}"
-      dest: "/tmp/openshift-client-linux-{{ oc_version }}.tar.gz"
-      mode: "0644"
-  
-  - name: Extract oc binary to /usr/local/bin
-    ansible.builtin.unarchive:
-      src: "/tmp/openshift-client-linux-{{ oc_version }}.tar.gz"
-      dest: "/usr/local/bin"
-      remote_src: true
-      mode: "0755"
     become: true
