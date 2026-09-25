@@ -2,26 +2,9 @@
 - name: Ensure required tooling is installed, validated and logged in
   hosts: all
   tasks:
-  - name: Add MongoDB official repository
-    ansible.builtin.yum_repository:
-      name: mongodb-org-8.0
-      description: MongoDB Repository
-      baseurl: https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
-      gpgcheck: true
-      enabled: true
-      gpgkey: https://www.mongodb.org/static/pgp/server-8.0.asc
-    become: true
-  
-  - name: Install system packages, developer tools, and MongoDB
-    ansible.builtin.dnf:
-      name:
-        - mongodb-org
-      state: present
-    become: true
-  
-  - name: Enable and start MongoDB service
-    ansible.builtin.systemd:
-      name: mongod
-      enabled: true
-      state: started
-    become: true
+  - name: Hapus sisa container lama yang error
+    ansible.builtin.command: podman rm -f mongo-db
+    ignore_errors: true
+
+  - name: Jalankan MongoDB (Mencoba versi 7.0)
+    ansible.builtin.command: podman run -d --name mongo-db -p 27017:27017 docker.io/library/mongo:7.0
