@@ -1,0 +1,31 @@
+- name: Tambahkan repository MongoDB terbaru (8.0)
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/mongodb-org-8.0.repo
+        content: |
+          [mongodb-org-8.0]
+          name=MongoDB Repository
+          baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
+          gpgcheck=1
+          enabled=1
+          gpgkey=https://pgp.mongodb.com/server-8.0.asc
+      become: true
+
+    - name: Install MongoDB
+      ansible.builtin.dnf:
+        name: mongodb-org
+        state: latest
+      become: true
+
+    - name: Buka akses MongoDB (bindIp) agar bisa dihubungi OpenShift
+      ansible.builtin.replace:
+        path: /etc/mongod.conf
+        regexp: 'bindIp: 127\.0\.0\.1'
+        replace: 'bindIp: 0.0.0.0'
+      become: true
+
+    - name: Nyalakan service MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted
+        enabled: true
+      become: true
