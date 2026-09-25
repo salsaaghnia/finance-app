@@ -2,34 +2,22 @@
 - name: Instalasi dan Setup MongoDB
   hosts: all
   tasks:
-    - name: Tambahkan repository MongoDB terbaru
-      ansible.builtin.copy:
-        dest: /etc/yum.repos.d/mongodb-org-8.0.repo
-        content: |
-          [mongodb-org-8.0]
-          name=MongoDB Repository
-          baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
-          gpgcheck=1
-          enabled=1
-          gpgkey=https://pgp.mongodb.com/server-8.0.asc
-      become: true
-
-    - name: Install MongoDB
+    - name: Pastikan Podman terinstal
       ansible.builtin.dnf:
-        name: mongodb-org
-        state: latest
+        name: podman
+        state: present
       become: true
 
-    - name: Buka akses MongoDB (bindIp) agar bisa dihubungi OpenShift
-      ansible.builtin.replace:
-        path: /etc/mongod.conf
-        regexp: 'bindIp: 127\.0\.0\.1'
-        replace: 'bindIp: 0.0.0.0'
-      become: true
+    - name: Cek apakah container MongoDB sudah berjalan
+      ansible.builtin.command: podman ps -q -f name=mongo-db
+      register: mongo_status
+      changed_when: false
 
-    - name: Nyalakan service MongoDB
-      ansible.builtin.systemd:
-        name: mongod
-        state: restarted
-        enabled: true
-      become: true
+    - name: Hapus sisa container lama jika ada error (Opsional/Pembersihan)
+      ansible.builtin.command: podman rm -f mongo-db
+      when: mongo_status.stdout == ""
+      ignore_errors: true
+
+    - name: Jalankan MongoDB menggunakan Podman
+      ansible.builtin.command: podman run -d --name mongo-db -p 27017:27017 docker.io/library/mongo:latest
+      when: mongo_status.stdout == ""
