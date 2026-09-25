@@ -1,3 +1,10 @@
+---
+- name: Instalasi dan Setup MongoDB
+  hosts: all
+  tasks:
+    - name: Tambahkan repository MongoDB terbaru (8.0)
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/mongodb-org-8.0.repo
 - name: Tambahkan repository MongoDB terbaru (8.0)
       ansible.builtin.copy:
         dest: /etc/yum.repos.d/mongodb-org-8.0.repo
